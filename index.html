@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Jui Accounts — Calculator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Playfair+Display:wght@500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --green-50:  #E1F5EE;
+      --green-100: #9FE1CB;
+      --green-400: #1D9E75;
+      --green-600: #0F6E56;
+      --green-800: #085041;
+      --gray-50:   #F7F6F2;
+      --gray-100:  #ECEAE3;
+      --gray-200:  #D3D1C7;
+      --gray-400:  #888780;
+      --gray-700:  #3A3A38;
+      --gray-900:  #1A1A18;
+      --radius-sm: 10px;
+      --radius-md: 16px;
+      --radius-lg: 24px;
+    }
+
+    html, body {
+      height: 100%;
+      font-family: 'DM Mono', monospace;
+    }
+
+    body {
+      background-color: var(--gray-50);
+      background-image:
+        radial-gradient(circle at 20% 20%, rgba(29,158,117,0.08) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(29,158,117,0.05) 0%, transparent 50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 2rem 1rem;
+    }
+
+    /* ── Brand header ── */
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 2rem;
+      animation: fadeDown 0.5s ease both;
+    }
+    .brand-icon {
+      width: 36px;
+      height: 36px;
+      background: var(--green-400);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .brand-icon svg { display: block; }
+    .brand-name {
+      font-family: 'Playfair Display', serif;
+      font-size: 22px;
+      font-weight: 600;
+      color: var(--gray-900);
+      letter-spacing: 0.3px;
+    }
+    .brand-tag {
+      font-size: 11px;
+      color: var(--gray-400);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-left: 2px;
+    }
+
+    /* ── Calculator shell ── */
+    .calc {
+      background: #ffffff;
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem;
+      width: 320px;
+      box-shadow: 0 4px 32px rgba(0,0,0,0.06), 0 1px 4px rgba(0,0,0,0.04);
+      animation: fadeUp 0.5s ease 0.1s both;
+    }
+
+    /* ── Display ── */
+    .display {
+      background: var(--gray-50);
+      border: 1px solid var(--gray-100);
+      border-radius: var(--radius-md);
+      padding: 1rem 1.25rem;
+      margin-bottom: 1.25rem;
+      min-height: 96px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      justify-content: flex-end;
+      gap: 6px;
+      overflow: hidden;
+    }
+    .display-expr {
+      font-size: 13px;
+      color: var(--gray-400);
+      min-height: 18px;
+      word-break: break-all;
+      text-align: right;
+    }
+    .display-main {
+      font-size: 36px;
+      font-weight: 500;
+      color: var(--gray-900);
+      word-break: break-all;
+      text-align: right;
+      line-height: 1.1;
+      transition: font-size 0.1s;
+    }
+
+    /* ── Button grid ── */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+
+    .btn {
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-sm);
+      height: 62px;
+      font-family: 'DM Mono', monospace;
+      font-size: 16px;
+      font-weight: 400;
+      cursor: pointer;
+      background: #ffffff;
+      color: var(--gray-700);
+      transition: background 0.12s, transform 0.08s, border-color 0.12s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn:hover { background: var(--gray-50); border-color: var(--gray-200); }
+    .btn:active { transform: scale(0.93); background: var(--gray-100); }
+
+    .btn.util { background: var(--gray-100); color: var(--gray-400); border-color: var(--gray-100); }
+    .btn.util:hover { background: var(--gray-200); }
+
+    .btn.op {
+      background: var(--green-50);
+      color: var(--green-600);
+      border-color: var(--green-100);
+      font-weight: 500;
+      font-size: 18px;
+    }
+    .btn.op:hover { background: var(--green-100); }
+
+    .btn.eq {
+      background: var(--green-400);
+      color: #ffffff;
+      border: none;
+      font-size: 22px;
+      font-weight: 400;
+    }
+    .btn.eq:hover { background: var(--green-600); }
+    .btn.eq:active { background: var(--green-800); }
+
+    .btn.zero { grid-column: span 2; justify-content: flex-start; padding-left: 22px; }
+
+    /* ── History strip ── */
+    .history {
+      margin-top: 1.25rem;
+      border-top: 1px solid var(--gray-100);
+      padding-top: 1rem;
+      max-height: 90px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column-reverse;
+      gap: 4px;
+    }
+    .history::-webkit-scrollbar { width: 4px; }
+    .history::-webkit-scrollbar-thumb { background: var(--gray-200); border-radius: 4px; }
+    .hist-item {
+      font-size: 12px;
+      color: var(--gray-400);
+      text-align: right;
+    }
+
+    /* ── Footer ── */
+    .footer {
+      margin-top: 1.5rem;
+      font-size: 11px;
+      color: var(--gray-400);
+      letter-spacing: 0.5px;
+      animation: fadeUp 0.5s ease 0.25s both;
+    }
+
+    /* ── Animations ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeDown {
+      from { opacity: 0; transform: translateY(-10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 380px) {
+      .calc { width: 100%; }
+      .btn { height: 54px; font-size: 15px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="brand">
+    <div class="brand-icon">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="3" y="3" width="6" height="6" rx="1.5" fill="white" fill-opacity="0.9"/>
+        <rect x="11" y="3" width="6" height="6" rx="1.5" fill="white" fill-opacity="0.55"/>
+        <rect x="3" y="11" width="6" height="6" rx="1.5" fill="white" fill-opacity="0.55"/>
+        <rect x="11" y="11" width="6" height="6" rx="1.5" fill="white" fill-opacity="0.9"/>
+      </svg>
+    </div>
+    <div>
+      <div class="brand-name">Jui Accounts</div>
+      <div class="brand-tag">Calculator</div>
+    </div>
+  </div>
+
+  <div class="calc">
+    <div class="display">
+      <div class="display-expr" id="expr"></div>
+      <div class="display-main" id="display">0</div>
+    </div>
+
+    <div class="grid">
+      <button class="btn util" onclick="calcAC()">AC</button>
+      <button class="btn util" onclick="calcSign()">+/−</button>
+      <button class="btn util" onclick="calcPct()">%</button>
+      <button class="btn op"   onclick="calcOp('÷')">÷</button>
+
+      <button class="btn" onclick="calcNum('7')">7</button>
+      <button class="btn" onclick="calcNum('8')">8</button>
+      <button class="btn" onclick="calcNum('9')">9</button>
+      <button class="btn op" onclick="calcOp('×')">×</button>
+
+      <button class="btn" onclick="calcNum('4')">4</button>
+      <button class="btn" onclick="calcNum('5')">5</button>
+      <button class="btn" onclick="calcNum('6')">6</button>
+      <button class="btn op" onclick="calcOp('−')">−</button>
+
+      <button class="btn" onclick="calcNum('1')">1</button>
+      <button class="btn" onclick="calcNum('2')">2</button>
+      <button class="btn" onclick="calcNum('3')">3</button>
+      <button class="btn op" onclick="calcOp('+')">+</button>
+
+      <button class="btn zero" onclick="calcNum('0')">0</button>
+      <button class="btn" onclick="calcDot()">.</button>
+      <button class="btn eq" onclick="calcEq()">=</button>
+    </div>
+
+    <div class="history" id="history"></div>
+  </div>
+
+  <div class="footer">Jui Accounts &copy; 2026 &mdash; All rights reserved</div>
+
+  <script>
+    let cur = '0', prev = '', op = '', freshNum = false;
+    const disp = document.getElementById('display');
+    const expr = document.getElementById('expr');
+    const hist = document.getElementById('history');
+
+    function fmt(n) {
+      if (!isFinite(n)) return 'Error';
+      let s = parseFloat(n.toPrecision(12)).toString();
+      if (s.length > 14) s = parseFloat(n.toPrecision(8)).toString();
+      return s;
+    }
+
+    function update() {
+      disp.textContent = cur;
+      disp.style.fontSize = cur.length > 12 ? '20px' : cur.length > 8 ? '26px' : '36px';
+    }
+
+    function addHistory(text) {
+      const el = document.createElement('div');
+      el.className = 'hist-item';
+      el.textContent = text;
+      hist.appendChild(el);
+    }
+
+    function calcNum(d) {
+      if (freshNum) { cur = d; freshNum = false; }
+      else cur = cur === '0' ? d : (cur.length < 14 ? cur + d : cur);
+      update();
+    }
+
+    function calcDot() {
+      if (freshNum) { cur = '0.'; freshNum = false; return update(); }
+      if (!cur.includes('.')) cur += '.';
+      update();
+    }
+
+    function calcAC() {
+      cur = '0'; prev = ''; op = ''; freshNum = false;
+      expr.textContent = '';
+      update();
+    }
+
+    function calcSign() {
+      if (cur === '0' || cur === 'Error') return;
+      cur = String(parseFloat(cur) * -1);
+      update();
+    }
+
+    function calcPct() {
+      if (cur === 'Error') return;
+      cur = String(parseFloat(cur) / 100);
+      update();
+    }
+
+    function calcOp(o) {
+      if (op && !freshNum) calcEq(true);
+      prev = cur; op = o; freshNum = true;
+      expr.textContent = prev + ' ' + op;
+    }
+
+    function calcEq(silent) {
+      if (!op || !prev) return;
+      const a = parseFloat(prev), b = parseFloat(cur);
+      let r;
+      if (op === '+') r = a + b;
+      else if (op === '−') r = a - b;
+      else if (op === '×') r = a * b;
+      else if (op === '÷') r = b !== 0 ? a / b : Infinity;
+      const result = fmt(r);
+      if (!silent) {
+        const line = prev + ' ' + op + ' ' + cur + ' = ' + result;
+        expr.textContent = line;
+        addHistory(line);
+        op = ''; prev = '';
+      }
+      cur = result;
+      freshNum = true;
+      update();
+    }
+
+    // Keyboard support
+    document.addEventListener('keydown', e => {
+      if (e.key >= '0' && e.key <= '9') calcNum(e.key);
+      else if (e.key === '.') calcDot();
+      else if (e.key === '+') calcOp('+');
+      else if (e.key === '-') calcOp('−');
+      else if (e.key === '*') calcOp('×');
+      else if (e.key === '/') { e.preventDefault(); calcOp('÷'); }
+      else if (e.key === 'Enter' || e.key === '=') calcEq();
+      else if (e.key === 'Escape') calcAC();
+      else if (e.key === 'Backspace') {
+        if (freshNum || cur.length <= 1) { cur = '0'; freshNum = false; }
+        else cur = cur.slice(0, -1);
+        update();
+      }
+      else if (e.key === '%') calcPct();
+    });
+  </script>
+</body>
+</html>
